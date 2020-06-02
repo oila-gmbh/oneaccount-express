@@ -5,6 +5,9 @@ This library is a middleware for Node.js `express` web framework.
 Please follow the instructions or official documentations for an integration.
 #### NOTE: example 2 is the most preferred approach for a production setup
 
+##### Installation
+```npm install -S oneaccount-express```
+
 #### Example 1 (In Memory Engine):
 `oneaccount-express` by default uses in memory cache engine if a custom engine is not supplied.
 ```js
