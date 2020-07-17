@@ -7,14 +7,14 @@ import { Engine, Request, Options } from './utils';
 
 export * from './utils';
 
-export default class OneAccount {
+export class OneAccount {
   engine: Engine
   options: Options
   authHeader?: string
   uuid?: string
   req?: Request
   // @ts-ignore
-  constructor(options: Options = { callbackURL: '/onaccountauth' }): Handler {
+  constructor(options: Options = { callbackURL: '/oneaccountauth' }): Handler {
     this.options = options;
     this.engine = options.engine || new InMemory();
     // @ts-ignore
@@ -41,7 +41,7 @@ export default class OneAccount {
     let { uuid, externalId, ...rest } = body;
     if (!uuid) throw new BadRequest('uuid is required');
     let err = await this.engine.set(uuid, JSON.stringify(rest));
-    if (err) throw new InternalServerError('unknown error, please try again later', 'engine error: ' + err.stack || err.message);
+    if (err && err != 'OK') throw new InternalServerError('unknown error, please try again later', 'engine error: ' + err.stack || err.message || err || 'unknown error');
   }
 
   async authorize(): Promise<string> {

@@ -1,5 +1,5 @@
 // This is an example of how to use the package
-import OneAccount, { HttpError, Request } from './src'
+import { OneAccount, HttpError, Request } from './src'
 import { Request as ExpressRequest, Response, NextFunction } from 'express'
 
 import express from 'express'

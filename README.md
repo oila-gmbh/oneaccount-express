@@ -70,13 +70,13 @@ app.use(new OneAccount({
   engine: engine: {
     // this approach allows us to expire items so they don't pollute the caching engine
     // this approach is most prefered out of the 3 approaches
-    set: (k,v)=> redis.set(k, v, "EX", 60),
-    get: (k) => {
-      let v = redis.get(k)
+  	set: (k,v)=> redis.set(k, v, "EX", 60),
+  	get: (k) => {
+  		let v = redis.get(k)
       redis.del(k)
       return v
-    }
-  },
+  	}
+  },,
   callbackURL: '/oneaccountauth',
 }))
 
@@ -95,8 +95,6 @@ const Redis = require('ioredis')
 
 app.use(new OneAccount({
   // since `ioredis` implements the Engine interface, we can use it as it is
-  // although redis by default doesn't expire keys, soo example 2 is
-  // preferred to this one
   engine: new Redis(),
   callbackURL: '/oneaccountauth',
 }))
