@@ -30,7 +30,7 @@ export class OneAccount {
       return res.json({ success: true });
     };
     // handle auth request
-    this.uuid = req.headers.uuid as string;
+    this.uuid = req.body.uuid as string;
     const data = await this.authorize();
     (req as any as Request).oneaccount = JSON.parse(data);
     return next();
