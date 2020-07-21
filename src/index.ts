@@ -32,7 +32,7 @@ export class OneAccount {
     // handle auth request
     this.uuid = req.body.uuid as string;
     const data = await this.authorize();
-    if (typeof data === 'string' {
+    if (typeof data === 'string') {
       (req as any as Request).oneaccount = JSON.parse(data);
     } else {
       (req as any as Request).oneaccount = data
