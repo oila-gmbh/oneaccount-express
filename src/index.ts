@@ -32,7 +32,11 @@ export class OneAccount {
     // handle auth request
     this.uuid = req.body.uuid as string;
     const data = await this.authorize();
-    (req as any as Request).oneaccount = JSON.parse(data);
+    if (typeof data === 'string' {
+      (req as any as Request).oneaccount = JSON.parse(data);
+    } else {
+      (req as any as Request).oneaccount = data
+    }
     return next();
   }
 
@@ -57,8 +61,8 @@ export class OneAccount {
       if (err instanceof HttpError) throw err;
       throw new InternalServerError('unknown error, please try again later', 'engine error: ' + err.stack || err.message);
     };
-    // const verified = await this.verify();
-    // if (!verified) throw new BadRequest('One account token verification failed');
+    const verified = await this.verify();
+    if (!verified) throw new BadRequest('One account token verification failed');
     return data;
   }
 
