@@ -8,11 +8,10 @@ const app = express()
 app.use(express.json())
 
 // @ts-ignore
-app.use(new OneAccount({
-  callbackURL: '/oneaccountauth',
-}))
 
-app.post('/oneaccountauth', (request: ExpressRequest, res: Response, next: NextFunction) => {
+let oneaccount = new OneAccount()
+
+app.post('/oneaccountauth', oneaccount.auth, (request: ExpressRequest, res: Response, next: NextFunction) => {
   let req = request as any as Request
   if (!req.oneaccount) {
     // save to database or update

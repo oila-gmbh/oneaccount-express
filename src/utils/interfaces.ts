@@ -9,6 +9,6 @@ export interface Request extends ExpressRequest {
 }
 
 export interface Options {
-  callbackURL?: string;
   engine?: Engine;
+  callbackURL?: string;
 }

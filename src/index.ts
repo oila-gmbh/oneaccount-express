@@ -1,9 +1,8 @@
 import { HttpError, BadRequest, InternalServerError } from './utils/errors';
-import { catchAsync } from './utils/async';
 import { Response, Request as ExpressRequest, Handler, NextFunction } from 'express';
 import https, { RequestOptions } from 'https';
 import InMemory from './caches/inmemory';
-import { Engine, Request, Options } from './utils';
+import { Engine, Request, Options, trimBy } from './utils';
 
 export * from './utils';
 
@@ -14,33 +13,38 @@ export class OneAccount {
   uuid?: string
   req?: Request
   // @ts-ignore
-  constructor(options: Options = { callbackURL: '/oneaccountauth' }): Handler {
+  constructor(options: Options = {}): Handler {
     this.options = options;
     this.engine = options.engine || new InMemory();
-    // @ts-ignore
-    return catchAsync(this.auth);
+    if (this.options.callbackURL) {
+      this.options.callbackURL = trimBy(this.options.callbackURL, "/")
+    }
   }
 
   auth = async (req: ExpressRequest, res: Response, next: NextFunction) => {
-    if (req.path !== this.options.callbackURL) return next();
-    this.authHeader = req.headers.authorization;
-    if (!this.authHeader) {
-      // handle data from the callback
-      await this.save(req.body);
-      return res.json({ success: true });
-    };
-    // handle auth request
-    this.uuid = req.body.uuid as string;
-    const data = await this.authorize();
-    if (typeof data === 'string') {
-      (req as any as Request).oneaccount = JSON.parse(data);
-    } else {
-      (req as any as Request).oneaccount = data
+    try {
+      if (this.options.callbackURL && trimBy(req.path, "/") !== this.options.callbackURL) return next();
+      this.authHeader = req.headers.authorization;
+      if (!this.authHeader) {
+        // handle data from the callback
+        await this.save(req.body);
+        return res.json({success: true});
+      }
+      // handle auth request
+      this.uuid = req.body.uuid as string;
+      const data = await this.authorize();
+      if (typeof data === 'string') {
+        (req as any as Request).oneaccount = JSON.parse(data);
+      } else {
+        (req as any as Request).oneaccount = data;
+      }
+      return next();
+    } catch (e) {
+      return next(e);
     }
-    return next();
   }
 
-  async save(body: any) {
+  private async save(body: any) {
     if (!body) throw new BadRequest('no data has been sent', 'body is empty');
     let { uuid, externalId, ...rest } = body;
     if (!uuid) throw new BadRequest('uuid is required');
@@ -48,7 +52,7 @@ export class OneAccount {
     if (err && err != 'OK') throw new InternalServerError('unknown error, please try again later', 'engine error: ' + err.stack || err.message || err || 'unknown error');
   }
 
-  async authorize(): Promise<string> {
+  private async authorize(): Promise<string> {
     if (!this.authHeader || !this.authHeader.startsWith('Bearer ')) {
       throw new BadRequest('empty or wrong bearer token');
     }
@@ -60,13 +64,13 @@ export class OneAccount {
     } catch (err) {
       if (err instanceof HttpError) throw err;
       throw new InternalServerError('unknown error, please try again later', 'engine error: ' + err.stack || err.message);
-    };
+    }
     const verified = await this.verify();
     if (!verified) throw new BadRequest('One account token verification failed');
     return data;
   }
 
-  async verify() {
+  private async verify() {
     const data = JSON.stringify({ uuid: this.uuid });
     const options = {
       method: 'POST',
@@ -84,7 +88,7 @@ export class OneAccount {
     return response.statusCode === 200 && response.body && response.body.success;
   }
 
-  requestPromise(options: RequestOptions, data: string): Promise<any> {
+  private requestPromise(options: RequestOptions, data: string): Promise<any> {
     return new Promise((resolve, reject) => {
       let req = https.request(options, (res) => {
         let output = '';
@@ -101,7 +105,7 @@ export class OneAccount {
             return resolve(response);
           } catch (e) {
             return reject(e);
-          };
+          }
         });
       });
       req.on('error', (err) => {
