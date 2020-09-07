@@ -1,6 +1,6 @@
 {
   "name": "oneaccount-express",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "oneaccount express library",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
