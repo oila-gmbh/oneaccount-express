@@ -78,6 +78,7 @@ let oneaccount = new OneAccount({
   },
 })
 
+// The route URL is the callback URL you have set when you created One account app.
 app.post('/oneaccountauth', oneaccount.auth, (req, res, next) => {
   if (!req.oneaccount) {
     return res.status(401).json({ error: 'unauthorized' })
@@ -98,6 +99,7 @@ let oneaccount = new OneAccount({
   callbackURL: '/oneaccountauth',
 })
 
+// The route URL is the callback URL you have set when you created One account app.
 app.post('/oneaccountauth', oneaccount.auth, (req, res, next) => {
   if (!req.oneaccount) {
     return res.status(401).json({ error: 'unauthorized' })
