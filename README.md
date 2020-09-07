@@ -3,7 +3,7 @@
 This library is a middleware for Node.js `express` web framework.
 
 Please follow the instructions or official documentations for an integration.
-#### NOTE: example 2 is the most preferred approach for a production setup
+#### NOTE: example 2 is the most preferred approach for a production setup. Examples 1 and 3 are only for development, or a service with small traffic.
 
 ##### Installation
 ```npm install -S oneaccount-express```
@@ -17,14 +17,11 @@ const app = express()
 
 app.use(express.json())
 
-// The callback URL is the URL you have set when you created One account app.
-// The path for the router, callbackURL 
-// and callback URL of the application must be the same.
-app.use(new OneAccount({
-  callbackURL: '/oneaccountauth',
-}))
-
-app.post('/oneaccountauth', (req, res, next) => {
+let oneaccount = new OneAccount()
+// The route URL is the callback URL you have set when you created One account app.
+app.post('/oneaccountauth', oneaccount.auth, (req, res, next) => {
+  // NOTE: req.oneaccount is set when a user is authenticated, 
+  // so never return code 200 if this object is not present
   if (!req.oneaccount) {
     return res.status(401).json({ error: 'unauthorized' })
   }
@@ -50,7 +47,7 @@ app.use((err, req, res, next) => {
 app.listen(process.env.PORT || 3000)
 ```
 
-For brevity we will leave out comments for the following examples, 
+For brevity, we will leave out comments for the following examples, 
 if something is unclear please read the comments on the first example 
 or check the documentation or create an issue 
 
@@ -66,21 +63,22 @@ this example demonstrates how to create a custom engine
 const Redis = require('ioredis')
 const redis = new Redis()
 
-app.use(new OneAccount({
-  engine: engine: {
-    // this approach allows us to expire items so they don't pollute the caching engine
-    // this approach is most prefered out of the 3 approaches
-  	set: (k,v)=> redis.set(k, v, "EX", 60),
-  	get: (k) => {
-  		let v = redis.get(k)
-      redis.del(k)
-      return v
-  	}
-  },,
-  callbackURL: '/oneaccountauth',
-}))
+// this approach allows us to expire items so they don't pollute the caching engine
+// this approach is most prefered out of the 3 approaches
+let oneaccount = new OneAccount({
+  engine: {
+    // for best results the timeout should match the timeout 
+    // set in frontend (updateInterval option, default: 3 minutes)
+    set: (k,v)=> redis.set(k, v, "EX", 3 * 60),
+    get: (k) => {
+      let v = redis.get(k);
+      redis.del(k);
+      return v;
+    }
+  },
+})
 
-app.post('/oneaccountauth', (req, res, next) => {
+app.post('/oneaccountauth', oneaccount.auth, (req, res, next) => {
   if (!req.oneaccount) {
     return res.status(401).json({ error: 'unauthorized' })
   }
@@ -92,14 +90,15 @@ Now our authentication is production ready!
 #### Example 3 (Custom Engine):
 ```js
 const Redis = require('ioredis')
-
-app.use(new OneAccount({
+let oneaccount = new OneAccount({
   // since `ioredis` implements the Engine interface, we can use it as it is
+  // although it will not expire and delete keys after read, so this approach is 
+  // not recommended for production
   engine: new Redis(),
   callbackURL: '/oneaccountauth',
-}))
+})
 
-app.post('/oneaccountauth', (req, res, next) => {
+app.post('/oneaccountauth', oneaccount.auth, (req, res, next) => {
   if (!req.oneaccount) {
     return res.status(401).json({ error: 'unauthorized' })
   }
